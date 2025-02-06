@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Kitchen Story Lab - 맛있는 이야기가 시작되는 곳{% endblock %}
+
+{% block content %}
+<section class="container">
+    <article class="row mb-5">
+        <section class="col-12">
+            <h2 class="mb-4">최신 레시피</h2>
+            <div id="latestRecipes" class="carousel slide" data-bs-ride="carousel">
+                <div class="carousel-inner">
+                    {% for recipe in latest_recipes %}
+                    <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                        <img src="{{ recipe.thumbnail.url }}" class="d-block w-100" alt="{{ recipe.title }}" style="height: 400px; object-fit: cover;">
+                        <div class="carousel-caption d-none d-md-block">
+                            <h5>{{ recipe.title }}</h5>
+                            <p>{{ recipe.summary|truncatechars:100 }}</p>
+                            <a href="{% url 'post_detail' recipe.pk %}" class="btn btn-primary">자세히 보기</a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <button class="carousel-control-prev" type="button" data-bs-target="#latestRecipes" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">이전</span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#latestRecipes" data-bs-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">다음</span>
+                </button>
+            </div>
+        </section>
+    </article>
+
+    <article class="row mb-5">
+        <section class="col-12">
+            <h2 class="mb-4">카테고리</h2>
+            <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-4">
+                {% for category in categories %}
+                <div class="col">
+                    <a href="{% url 'post_list' %}?category={{ category.slug }}" class="text-decoration-none">
+                        <div class="card h-100 shadow-sm hover-shadow">
+                            <img src="{{ category.image.url }}" class="card-img-top" alt="{{ category.name }}" style="height: 150px; object-fit: cover;">
+                            <div class="card-body text-center">
+                                <h5 class="card-title">{{ category.name }}</h5>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+    </article>
+
+    <article class="row">
+        <section class="col-12">
+            <h2 class="mb-4">인기 레시피</h2>
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                {% for recipe in popular_recipes %}
+                <div class="col">
+                    <div class="card h-100 shadow-sm hover-shadow">
+                        <img src="{{ recipe.thumbnail.url }}" class="card-img-top" alt="{{ recipe.title }}" style="height: 200px; object-fit: cover;">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ recipe.title }}</h5>
+                            <p class="card-text">{{ recipe.summary|truncatechars:100 }}</p>
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">조회수: {{ recipe.view_count }}</small>
+                                <a href="{% url 'post_detail' recipe.pk %}" class="btn btn-sm btn-outline-primary">자세히 보기</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+    </article>
+</section>
+{% endblock %}
