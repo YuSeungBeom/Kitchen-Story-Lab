@@ -1,122 +1,98 @@
-{% extends 'blog/base.html' %}
+{% extends 'base.html' %}
 {% load static %}
 
-{% block title %}레시피 모음 - Kitchen Story Lab{% endblock %}
+{% block title %}{{ post.title }} - Kitchen Story Lab{% endblock %}
 
 {% block content %}
-<div class="row">
-    <!-- 카테고리 필터 -->
-    <div class="col-md-3">
-        <div class="card shadow-sm mb-4">
-            <div class="card-body">
-                <h5 class="card-title mb-3">카테고리</h5>
-                <div class="list-group list-group-flush">
-                    <a href="{% url 'post_list' %}" class="list-group-item list-group-item-action {% if not category %}active{% endif %}">
-                        전체보기
-                    </a>
-                    {% for cat in categories %}
-                    <a href="{% url 'post_list' %}?category={{ cat.slug }}" 
-                       class="list-group-item list-group-item-action {% if category == cat %}active{% endif %}">
-                        {{ cat.name }}
-                    </a>
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 게시글 목록 -->
-    <div class="col-md-9">
-        <!-- 정렬 옵션 -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h4 class="mb-0">{% if category %}{{ category.name }}{% else %}전체 레시피{% endif %}</h4>
-            <div class="dropdown">
-                <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                    {% if sort == 'latest' %}최신순
-                    {% elif sort == 'popular' %}인기순
-                    {% else %}최신순{% endif %}
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end">
-                    <li><a class="dropdown-item" href="?sort=latest">최신순</a></li>
-                    <li><a class="dropdown-item" href="?sort=popular">인기순</a></li>
-                </ul>
-            </div>
-        </div>
-
-        <!-- 게시글 그리드 -->
-        <div class="row row-cols-1 row-cols-md-2 g-4">
-            {% for post in posts %}
-            <div class="col">
-                <div class="card h-100 shadow-sm hover-shadow">
-                    <a href="{% url 'post_detail' post.pk %}" class="text-decoration-none">
-                        <img src="{{ post.thumbnail.url|default:'static/images/default-thumbnail.jpg' }}" 
-                             class="card-img-top" alt="{{ post.title }}" style="height: 200px; object-fit: cover;">
-                    </a>
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <span class="badge bg-primary">{{ post.category.name }}</span>
-                            <small class="text-muted">{{ post.created_at|date:"Y.m.d" }}</small>
-                        </div>
-                        <h5 class="card-title">
-                            <a href="{% url 'post_detail' post.pk %}" class="text-decoration-none text-dark">
-                                {{ post.title }}
-                            </a>
-                        </h5>
-                        <p class="card-text text-muted">{{ post.summary|truncatechars:100 }}</p>
-                    </div>
-                    <div class="card-footer bg-transparent">
+<article class="container">
+    <section class="row">
+        <div class="col-lg-8">
+            <article class="card shadow-sm mb-4">
+                <img src="{{ post.thumbnail.url }}" class="card-img-top" alt="{{ post.title }}" style="height: 400px; object-fit: cover;">
+                <div class="card-body">
+                    <header class="mb-4">
+                        <h1 class="card-title mb-3">{{ post.title }}</h1>
                         <div class="d-flex justify-content-between align-items-center">
                             <div class="d-flex align-items-center">
                                 <img src="{{ post.author.profile.avatar.url|default:'static/images/default-avatar.png' }}" 
-                                     class="rounded-circle me-2" width="24" height="24">
-                                <span class="text-muted small">{{ post.author.username }}</span>
+                                     class="rounded-circle me-2" width="32" height="32" alt="{{ post.author.username }}">
+                                <span class="text-muted">{{ post.author.username }}</span>
                             </div>
-                            <div class="d-flex align-items-center text-muted small">
-                                <span class="me-3"><i class="bi bi-eye me-1"></i>{{ post.view_count }}</span>
-                                <span><i class="bi bi-heart me-1"></i>{{ post.like_count }}</span>
+                            <small class="text-muted">{{ post.created_at|date:"Y년 m월 d일" }}</small>
+                        </div>
+                    </header>
+                    <section class="mb-4">
+                        {{ post.content|safe }}
+                    </section>
+                    <footer class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="badge bg-primary">{{ post.category.name }}</span>
+                        </div>
+                        <div>
+                            <span class="me-3"><i class="bi bi-eye me-1"></i>{{ post.view_count }}</span>
+                            <span><i class="bi bi-heart me-1"></i>{{ post.like_count }}</span>
+                        </div>
+                    </footer>
+                </div>
+            </article>
+
+            <section class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h4 class="card-title mb-4">댓글</h4>
+                    {% for comment in post.comments.all %}
+                    <article class="mb-3">
+                        <div class="d-flex align-items-start">
+                            <img src="{{ comment.author.profile.avatar.url|default:'static/images/default-avatar.png' }}" 
+                                 class="rounded-circle me-2" width="32" height="32" alt="{{ comment.author.username }}">
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-1">{{ comment.author.username }}</h6>
+                                    <small class="text-muted">{{ comment.created_at|date:"Y-m-d H:i" }}</small>
+                                </div>
+                                <p class="mb-0">{{ comment.content }}</p>
                             </div>
                         </div>
-                    </div>
+                    </article>
+                    {% empty %}
+                    <p class="text-muted">아직 댓글이 없습니다. 첫 댓글을 작성해보세요!</p>
+                    {% endfor %}
+                    
+                    {% if user.is_authenticated %}
+                    <form method="post" action="{% url 'add_comment' post.pk %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="comment" class="form-label">댓글 작성</label>
+                            <textarea class="form-control" id="comment" name="content" rows="3" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">댓글 등록</button>
+                    </form>
+                    {% else %}
+                    <p class="text-muted">댓글을 작성하려면 <a href="{% url 'login' %}">로그인</a>해주세요.</p>
+                    {% endif %}
                 </div>
-            </div>
-            {% empty %}
-            <div class="col-12 text-center py-5">
-                <i class="bi bi-journal-x display-4 text-muted mb-3"></i>
-                <p class="text-muted">등록된 게시글이 없습니다.</p>
-            </div>
-            {% endfor %}
+            </section>
         </div>
 
-        <!-- 페이지네이션 -->
-        {% if is_paginated %}
-        <nav class="mt-4">
-            <ul class="pagination justify-content-center">
-                {% if page_obj.has_previous %}
-                <li class="page-item">
-                    <a class="page-link" href="?page=1{% if q %}&q={{ q }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">&laquo; 처음</a>
-                </li>
-                {% endif %}
-
-                {% for num in page_obj.paginator.page_range %}
-                {% if page_obj.number == num %}
-                <li class="page-item active">
-                    <span class="page-link">{{ num }}</span>
-                </li>
-                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ num }}{% if q %}&q={{ q }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">{{ num }}</a>
-                </li>
-                {% endif %}
-                {% endfor %}
-
-                {% if page_obj.has_next %}
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if q %}&q={{ q }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">마지막 &raquo;</a>
-                </li>
-                {% endif %}
-            </ul>
-        </nav>
-        {% endif %}
-    </div>
-</div>
+        <aside class="col-lg-4">
+            <section class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">관련 레시피</h5>
+                    {% for related_post in related_posts %}
+                    <article class="mb-3">
+                        <div class="d-flex align-items-center">
+                            <img src="{{ related_post.thumbnail.url }}" class="me-3" alt="{{ related_post.title }}" style="width: 64px; height: 64px; object-fit: cover;">
+                            <div>
+                                <h6 class="mb-0"><a href="{% url 'post_detail' related_post.pk %}" class="text-decoration-none text-dark">{{ related_post.title }}</a></h6>
+                                <small class="text-muted">{{ related_post.created_at|date:"Y-m-d" }}</small>
+                            </div>
+                        </div>
+                    </article>
+                    {% empty %}
+                    <p class="text-muted">관련 레시피가 없습니다.</p>
+                    {% endfor %}
+                </div>
+            </section>
+        </aside>
+    </section>
+</article>
 {% endblock %}
