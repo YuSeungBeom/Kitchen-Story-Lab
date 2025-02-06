@@ -36,11 +36,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'apps.accounts',
-    'apps.posts',
-    'apps.recipes',
-    'apps.tips',
-    'apps.interactions',
+    'blog',
+    
 ]
 
 MIDDLEWARE = [
@@ -132,6 +129,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
-AUTH_USER_MODEL = 'accounts.User'
+AUTH_USER_MODEL = 'auth.User'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
