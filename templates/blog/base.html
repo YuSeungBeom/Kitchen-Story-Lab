@@ -14,13 +14,13 @@
         <div class="container">
             <!-- 로고 영역 -->
             <div class="d-flex align-items-center">
-                <a class="navbar-brand d-flex align-items-center" href="{% url 'post_list' %}">
+                <a class="navbar-brand d-flex align-items-center" href="{% url 'blog:post_list' %}">
                     <img src="{% static 'images/logo.png' %}" alt="Kitchen Story Lab" height="32" class="me-2">
                     <span class="fw-bold">Kitchen Story Lab</span>
                 </a>
                 
                 <!-- 검색창 -->
-                <form class="d-flex ms-4" action="{% url 'post_list' %}" method="get">
+                <form class="d-flex ms-4" action="{% url 'blog:post_list' %}" method="get">
                     <div class="input-group">
                         <input type="text" name="q" value="{{ q }}" class="form-control" 
                                placeholder="레시피 검색..." style="width: 300px;">
@@ -34,7 +34,7 @@
             <!-- 사용자 메뉴 -->
             <div class="navbar-nav ms-auto">
                 {% if user.is_authenticated %}
-                    <a href="{% url 'post_write' %}" class="nav-link btn btn-outline-primary me-2">
+                    <a href="{% url 'blog:post_write' %}" class="nav-link btn btn-outline-primary me-2">
                         <i class="bi bi-plus-lg"></i> 새 글쓰기
                     </a>
                     <div class="dropdown">
@@ -44,8 +44,8 @@
                                  alt="프로필" class="rounded-circle" width="32" height="32">
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="{% url 'profile' %}">프로필</a></li>
-                            <li><a class="dropdown-item" href="{% url 'settings' %}">설정</a></li>
+                            <li><a class="dropdown-item" href="{% url 'blog:profile' %}">프로필</a></li>
+                            <li><a class="dropdown-item" href="{% url 'blog:settings' %}">설정</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
                                 <form method="post" action="{% url 'logout' %}">
@@ -77,11 +77,6 @@
                     <p class="text-muted small">맛있는 이야기가 시작되는 곳</p>
                 </div>
                 <div class="col-md-6 text-md-end">
-                    <div class="social-links">
-                        <a href="#" class="text-muted me-3"><i class="bi bi-instagram"></i></a>
-                        <a href="#" class="text-muted me-3"><i class="bi bi-facebook"></i></a>
-                        <a href="#" class="text-muted"><i class="bi bi-youtube"></i></a>
-                    </div>
                     <p class="text-muted small mt-2">&copy; 2024 Kitchen Story Lab. All rights reserved.</p>
                 </div>
             </div>
