@@ -1,13 +1,10 @@
 from django import forms
-from django.core.validators import FileExtensionValidator
+from tinymce.widgets import TinyMCE
 from .models import Post, Recipe
 
-def validate_file_size(value):
-    filesize = value.size
-    if filesize > 5 * 1024 * 1024:  # 5MB 제한
-        raise forms.ValidationError("이미지 크기는 5MB를 초과할 수 없습니다.")
-
 class PostForm(forms.ModelForm):
+    content = forms.CharField(widget=TinyMCE())
+    
     serving_size = forms.CharField(
         max_length=50, 
         required=False, 
@@ -31,24 +28,9 @@ class PostForm(forms.ModelForm):
         widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 5})
     )
 
-    thumbnail = forms.ImageField(
-        required=False,
-        validators=[
-            FileExtensionValidator(
-                allowed_extensions=['jpg', 'jpeg', 'png', 'gif'],
-                message='허용되는 이미지 형식은 jpg, jpeg, png, gif입니다.'
-            ),
-            validate_file_size
-        ],
-        widget=forms.FileInput(attrs={
-            'class': 'form-control',
-            'accept': 'image/jpeg,image/png,image/gif'
-        })
-    )
-
     class Meta:
         model = Post
-        fields = ['title', 'content', 'category', 'thumbnail', 'status']
+        fields = ['title', 'content', 'category', 'status']
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control'}),
             'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 5}),
