@@ -38,12 +38,8 @@ class Post(models.Model):
     content = models.TextField()
     author = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     category = models.ForeignKey('Category', on_delete=models.CASCADE, null=True, blank=True)
-    thumbnail = models.ImageField(
-        upload_to='thumbnails/', 
-        null=True, 
-        blank=True,
-        validators=[FileExtensionValidator(['jpg', 'jpeg', 'png', 'gif'])]
-    )
+    
+    
     view_count = models.PositiveIntegerField(default=0)
     status = models.CharField(
         max_length=20,
