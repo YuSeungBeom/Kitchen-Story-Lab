@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+
+{% block content %}
+<section class="container py-5">
+    <article class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <main class="card-body">
+                    <h2 class="card-title mb-4">프로필 수정</h2>
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        {% for field in form %}
+                        <div class="mb-3">
+                            <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                            {% render_field field class="form-control" %}
+                            {% if field.errors %}
+                            <span class="text-danger mt-1 small">{{ field.errors.0 }}</span>
+                            {% endif %}
+                            {% if field.help_text %}
+                            <small class="form-text">{{ field.help_text }}</small>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                        <footer class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">프로필 수정</button>
+                            <a href="{% url 'accounts:change_password' %}" class="btn btn-secondary">비밀번호 변경</a>
+                        </footer>
+                    </form>
+                </main>
+            </div>
+        </div>
+    </article>
+</section>
+{% endblock %}
