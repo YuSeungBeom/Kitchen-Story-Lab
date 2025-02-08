@@ -1,10 +1,17 @@
-from django.views import generic
-from django.views.generic import TemplateView
-from django.urls import reverse_lazy
+from django.conf import settings
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.http import JsonResponse
+from .models import PostLike
+from django.views import generic
+from django.views.decorators.http import require_POST
+from django.views.generic import TemplateView, CreateView
+from django.views.generic.edit import UpdateView, DeleteView
+from django.urls import reverse_lazy
 from django.db.models import Q, Count
-from .models import Post, Category, Recipe
-from .forms import PostForm
+from .models import Post, Category, Recipe, Comment
+from .forms import PostForm, CommentForm
 
 class PostListView(generic.ListView):
     model = Post
@@ -55,27 +62,44 @@ class PostListView(generic.ListView):
 
         return context
 
+
 class PostCreateView(LoginRequiredMixin, generic.CreateView):
     model = Post
     form_class = PostForm
     template_name = 'blog/post_form.html'
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['TINYMCE_JS_URL'] = settings.TINYMCE_JS_URL
+        context['TINYMCE_CONFIG'] = settings.TINYMCE_DEFAULT_CONFIG
+        return context
+
+    def dispatch(self, request, *args, **kwargs):
+        response = super().dispatch(request, *args, **kwargs)
+        response['X-Frame-Options'] = 'SAMEORIGIN'
+        response['Referrer-Policy'] = 'origin'
+        return response
+
     def form_valid(self, form):
+        # User 모델 가져오기
+        User = get_user_model()
+
+        # 현재 사용자를 직접 작성자로 설정
         form.instance.author = self.request.user
-        
-        response = super().form_valid(form)
-        
-        # 레시피 정보가 있는 경우 저장
-        if any([form.cleaned_data.get(field) for field in ['serving_size', 'cooking_time', 'ingredients', 'instructions']]):
+
+        # 포스트 저장
+        self.object = form.save()
+
+        # Recipe 생성 로직
+        if any([form.cleaned_data.get(field) for field in ['serving_size', 'cooking_time', 'difficulty']]):
             Recipe.objects.create(
                 post=self.object,
                 serving_size=form.cleaned_data.get('serving_size'),
                 cooking_time=form.cleaned_data.get('cooking_time'),
-                difficulty=form.cleaned_data.get('difficulty'),
-                ingredients=form.cleaned_data.get('ingredients'),
-                instructions=form.cleaned_data.get('instructions')
+                difficulty=form.cleaned_data.get('difficulty')
             )
-        return response
+
+        return super().form_valid(form)
 
     def get_success_url(self):
         return reverse_lazy('blog:post_detail', kwargs={'pk': self.object.pk})
@@ -84,6 +108,18 @@ class PostUpdateView(LoginRequiredMixin, UserPassesTestMixin, generic.UpdateView
     model = Post
     form_class = PostForm
     template_name = 'blog/post_form.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['TINYMCE_JS_URL'] = settings.TINYMCE_JS_URL
+        context['TINYMCE_CONFIG'] = settings.TINYMCE_DEFAULT_CONFIG
+        return context
+
+    def dispatch(self, request, *args, **kwargs):
+        response = super().dispatch(request, *args, **kwargs)
+        response['X-Frame-Options'] = 'SAMEORIGIN'
+        response['Referrer-Policy'] = 'origin'  # 추가된 부분
+        return response
 
     def test_func(self):
         post = self.get_object()
@@ -95,14 +131,11 @@ class PostUpdateView(LoginRequiredMixin, UserPassesTestMixin, generic.UpdateView
         recipe.serving_size = form.cleaned_data.get('serving_size')
         recipe.cooking_time = form.cleaned_data.get('cooking_time')
         recipe.difficulty = form.cleaned_data.get('difficulty')
-        recipe.ingredients = form.cleaned_data.get('ingredients')
-        recipe.instructions = form.cleaned_data.get('instructions')
         recipe.save()
         return response
 
     def get_success_url(self):
         return reverse_lazy('blog:post_detail', kwargs={'pk': self.object.pk})
-
 
 class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, generic.DeleteView):
     model = Post
@@ -162,26 +195,99 @@ class PostDetailView(generic.DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        current_post = self.object
         
+        User = get_user_model()
+        if self.request.user.is_authenticated:
+            try:
+                user = User.objects.get(username=self.request.user.username)
+                context['is_liked'] = PostLike.objects.filter(
+                    post=self.object, 
+                    user=user
+                ).exists()
+            except User.DoesNotExist:
+                context['is_liked'] = False
+        else:
+            context['is_liked'] = False
+
         # Retrieve previous and next posts within published status
         context['previous_post'] = Post.objects.filter(
             status='published', 
-            created_at__lt=current_post.created_at
+            created_at__lt=self.object.created_at
         ).order_by('-created_at').first()
         
         context['next_post'] = Post.objects.filter(
             status='published', 
-            created_at__gt=current_post.created_at
+            created_at__gt=self.object.created_at
         ).order_by('created_at').first()
 
         # Fetch recipe details for the current post
-        context['recipe_detail'] = Recipe.objects.filter(post=current_post).first()
+        context['recipe_detail'] = Recipe.objects.filter(post=self.object).first()
         
         # Find related posts in the same category
         context['related_posts'] = Post.objects.filter(
             status='published',
-            category=current_post.category
-        ).exclude(id=current_post.id).order_by('-created_at')[:3]
+            category=self.object.category
+        ).exclude(id=self.object.id).order_by('-created_at')[:3]
 
-        return context        
+        return context
+
+
+class CommentCreateView(LoginRequiredMixin, CreateView):
+    model = Comment
+    form_class = CommentForm
+    
+    def form_valid(self, form):
+        post = Post.objects.get(pk=self.kwargs['post_pk'])
+        form.instance.post = post
+        form.instance.author = self.request.user
+        return super().form_valid(form)
+    
+    def get_success_url(self):
+        return reverse_lazy('blog:post_detail', kwargs={'pk': self.kwargs['post_pk']})
+
+class CommentUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = Comment
+    form_class = CommentForm
+    template_name = 'blog/comment_update.html'
+
+    def test_func(self):
+        comment = self.get_object()
+        return self.request.user == comment.author
+
+    def get_success_url(self):
+        return reverse_lazy('blog:post_detail', kwargs={'pk': self.object.post.pk})
+
+class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    model = Comment
+    template_name = 'blog/comment_confirm_delete.html'
+
+    def test_func(self):
+        comment = self.get_object()
+        return self.request.user == comment.author
+
+    def get_success_url(self):
+        return reverse_lazy('blog:post_detail', kwargs={'pk': self.object.post.pk})
+
+
+@login_required
+@require_POST
+def toggle_like(request, post_pk):
+    post = get_object_or_404(Post, pk=post_pk)
+    
+    # 좋아요 존재 여부 확인
+    like, created = PostLike.objects.get_or_create(
+        post=post, 
+        user=request.user
+    )
+    
+    if not created:
+        # 이미 좋아요를 눌렀다면 취소
+        like.delete()
+        is_liked = False
+    else:
+        is_liked = True
+    
+    return JsonResponse({
+        'is_liked': is_liked,
+        'like_count': post.postlike_set.count()
+    })    
