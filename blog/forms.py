@@ -1,9 +1,15 @@
 from django import forms
 from tinymce.widgets import TinyMCE
-from .models import Post, Recipe
+from .models import Post, Recipe, Comment
 
 class PostForm(forms.ModelForm):
-    content = forms.CharField(widget=TinyMCE())
+    content = forms.CharField(
+        widget=TinyMCE(attrs={
+            'class': 'form-control',
+            'cols': 80,
+            'rows': 30
+        }),
+    )
     
     serving_size = forms.CharField(
         max_length=50, 
@@ -19,21 +25,13 @@ class PostForm(forms.ModelForm):
         required=False,
         widget=forms.Select(attrs={'class': 'form-select'})
     )
-    ingredients = forms.CharField(
-        required=False, 
-        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3})
-    )
-    instructions = forms.CharField(
-        required=False, 
-        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 5})
-    )
 
     class Meta:
         model = Post
-        fields = ['title', 'content', 'category', 'status']
+        fields = ['title', 'content', 'category', 'serving_size', 
+                 'cooking_time', 'difficulty', 'status']  # status를 마지막으로 이동
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control'}),
-            'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 5}),
             'category': forms.Select(attrs={'class': 'form-select'}),
             'status': forms.Select(attrs={'class': 'form-select'}),
         }
@@ -46,5 +44,15 @@ class PostForm(forms.ModelForm):
                 self.fields['serving_size'].initial = recipe.serving_size
                 self.fields['cooking_time'].initial = recipe.cooking_time
                 self.fields['difficulty'].initial = recipe.difficulty
-                self.fields['ingredients'].initial = recipe.ingredients
-                self.fields['instructions'].initial = recipe.instructions
+
+class CommentForm(forms.ModelForm):
+    class Meta:
+        model = Comment
+        fields = ['content']
+        widgets = {
+            'content': forms.Textarea(attrs={
+                'class': 'form-control', 
+                'rows': 3, 
+                'placeholder': '댓글을 작성해주세요.'
+            })
+        }
