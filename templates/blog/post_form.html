@@ -2,6 +2,10 @@
 {% load static %}
 {% load widget_tweaks %}
 
+{% block extra_head %}
+<meta name="referrer" content="origin">
+{% endblock %}
+
 {% block title %}{% if form.instance.pk %}글 수정{% else %}새 글 작성{% endif %} - Kitchen Story Lab{% endblock %}
 
 {% block content %}
@@ -23,7 +27,11 @@
                                     {{ field.label }}
                                 </label>
                                 {{ field.errors }}
-                                {% render_field field class="form-control" %}
+                                {% if field.name == 'content' %}
+                                    {{ field }}
+                                {% else %}
+                                    {% render_field field class="form-control" %}
+                                {% endif %}
                                 {% if field.help_text %}
                                     <small class="form-text text-muted">{{ field.help_text }}</small>
                                 {% endif %}
@@ -47,20 +55,32 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://cdn.tiny.cloud/1/YOUR_API_KEY/tinymce/5/tinymce.min.js" referrerpolicy="origin"></script>
+{{ form.media }}
 <script>
     tinymce.init({
         selector: '#id_content',
         height: 500,
         plugins: [
-            'advlist', 'autolink', 'lists', 'link', 'image', 
-        'charmap', 'preview', 'anchor', 'searchreplace', 
-        'visualblocks', 'code', 'fullscreen', 
-        'insertdatetime', 'media', 'table', 'help', 'wordcount'
-    ],
-    toolbar: 'undo redo | styles | bold italic | alignleft aligncenter alignright alignjustify | ' +
-             'bullist numlist outdent indent | link image | print preview media | ' +
-             'forecolor backcolor emoticons | help'
+            'advlist autolink lists link image charmap preview anchor',
+            'searchreplace visualblocks code fullscreen',
+            'insertdatetime media table paste code help wordcount'
+        ],
+        toolbar: 'undo redo | formatselect | ' +
+                'bold italic backcolor | alignleft aligncenter ' +
+                'alignright alignjustify | bullist numlist outdent indent | ' +
+                'removeformat | image media link | help',
+        menubar: 'file edit view insert format tools table help',
+        content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 16px; }',
+        browser_spellcheck: true,
+        contextmenu: false,
+        paste_data_images: true,
+        image_advtab: true,
+        automatic_uploads: true,
+        file_picker_types: 'image',
+        relative_urls: false,
+        remove_script_host: false,
+        convert_urls: true,
+        referrer_policy: 'origin'
     });
 </script>
 {% endblock %}
