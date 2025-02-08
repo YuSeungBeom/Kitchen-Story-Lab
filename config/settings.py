@@ -130,24 +130,44 @@ LOGIN_URL = 'accounts:login'
 LOGOUT_REDIRECT_URL = 'blog:post_list'
 
 
+TINYMCE_API_KEY = 'pypz0os5nocw3u5memwasz6cq8su53ar4dv5ksp9wep1hh80'
+TINYMCE_JS_URL = 'https://cdn.tiny.cloud/1/pypz0os5nocw3u5memwasz6cq8su53ar4dv5ksp9wep1hh80/tinymce/6/tinymce.min.js'
+TINYMCE_COMPRESSOR = False
+
 TINYMCE_DEFAULT_CONFIG = {
-    'height': 360,
-    'width': 'auto',
-    'menubar': False,
-    'plugins': [
-        'advlist', 'autolink', 'lists', 'link', 'image', 
-        'charmap', 'preview', 'anchor', 'searchreplace', 
-        'visualblocks', 'code', 'fullscreen', 
-        'insertdatetime', 'media', 'table', 'help', 'wordcount'
+    'api_key': 'pypz0os5nocw3u5memwasz6cq8su53ar4dv5ksp9wep1hh80',
+    'cleanup_on_startup': True,
+    'custom_undo_redo_levels': 20,
+    'selector': 'textarea',
+    'theme': 'silver',
+    'plugins': '''
+        advlist autolink lists link image charmap preview anchor
+        searchreplace visualblocks code fullscreen
+        insertdatetime media table paste code help wordcount
+    ''',
+    'toolbar': '''
+        undo redo | formatselect | bold italic backcolor | 
+        alignleft aligncenter alignright alignjustify | 
+        bullist numlist outdent indent | removeformat | 
+        image media link | help
+    ''',
+    'menubar': 'file edit view insert format tools table help',
+    'content_style': 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 16px; }',
+    'browser_spellcheck': True,
+    'contextmenu': 'link image',
+    'removed_menuitems': 'newdocument',
+    'paste_data_images': True,
+    'image_advtab': True,
+    'relative_urls': False,  # false -> False로 수정
+    'remove_script_host': False,  # false -> False로 수정
+    'referrer_policy': 'origin',
+    'protect': [
+        r'<!--[\s\S]*?-->',  # 이스케이프 시퀀스 수정
+        r'<!\[CDATA\[[\s\S]*?\]\]>',  # 이스케이프 시퀀스 수정
+        r'<script[\s\S]*?>'  # 이스케이프 시퀀스 수정
     ],
-    'toolbar': (
-        'undo redo | styles | bold italic | alignleft aligncenter alignright alignjustify | ' +
-        'bullist numlist outdent indent | link image | print preview media | ' +
-        'forecolor backcolor emoticons | help'
-    ),
-    'content_style': (
-        'body { font-family: -apple-system, BlinkMacSystemFont, '
-        'San Francisco, Segoe UI, Roboto, Helvetica Neue, sans-serif; '
-        'font-size: 14px; }'
-    )
+    'verify_html': True,
+    'document_base_url': "{{ request.scheme }}://{{ request.get_host }}/",
+    'allow_script_urls': True,
+    'convert_urls': False  # false -> False로 수정
 }
