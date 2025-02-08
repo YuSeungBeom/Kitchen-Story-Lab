@@ -1,5 +1,7 @@
 from django.contrib import admin
 from .models import *
+from tinymce.widgets import TinyMCE
+from django.db import models
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
@@ -13,6 +15,9 @@ class PostAdmin(admin.ModelAdmin):
     list_filter = ['status', 'category', 'created_at']
     search_fields = ['title', 'content', 'author__username']
     raw_id_fields = ['author']
+    formfield_overrides = {
+        models.TextField: {'widget': TinyMCE()},
+    }
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
@@ -26,7 +31,7 @@ class TagAdmin(admin.ModelAdmin):
 
 @admin.register(Comment)
 class CommentAdmin(admin.ModelAdmin):
-    list_display = ['post', 'user', 'created_at']
+    list_display = ['id', 'author', 'post', 'created_at','updated_at']
     search_fields = ['content']
 
 @admin.register(PostLike)
