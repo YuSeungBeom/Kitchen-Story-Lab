@@ -6,7 +6,31 @@
 <div class="container animate-fade-in">
     <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm mb-4">
         <div class="container-fluid">
-            <a class="navbar-brand" href="{% url 'blog:post_list' %}">레시피 블로그</a>
+            <a class="navbar-brand" href="{% url 'blog:post_list' %}">
+                <img src="{% static 'css/images/logo.jpg' %}" alt="Kitchen Story Lab" height="110" class="me-2">레시피 블로그</a>
+            
+            <!-- 검색 폼 추가 -->
+            <form action="{% url 'blog:post_list' %}" method="get" class="d-flex me-auto ms-4" style="width: 400px;">
+                <div class="input-group">
+                    <input class="form-control" type="search" name="q" placeholder="레시피, 재료 검색" 
+                           aria-label="Search" value="{{ q }}">
+                    {% if categories %}
+                    <select name="category" class="form-select" style="max-width: 120px;">
+                        <option value="">전체 카테고리</option>
+                        {% for category in categories %}
+                        <option value="{{ category.slug }}" 
+                                {% if request.GET.category == category.slug %}selected{% endif %}>
+                            {{ category.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    {% endif %}
+                    <button class="btn btn-primary" type="submit">
+                        검색
+                    </button>
+                </div>
+            </form>
+
             <div class="d-flex align-items-center">
                 {% if user.is_authenticated %}
                     <span class="me-3">{{ user.username }}님</span>
@@ -34,12 +58,22 @@
     <div class="container">
         <aside class="col-md-3 float-start">
             <!-- 기존 카테고리 네비게이션 코드 유지 -->
+            {% if categories %}
+            <div class="list-group">
+                {% for category in categories %}
+                <a href="{% url 'blog:post_list' %}?category={{ category.slug }}" 
+                   class="list-group-item list-group-item-action {% if category == selected_category %}active{% endif %}">
+                    {{ category.name }}
+                </a>
+                {% endfor %}
+            </div>
+            {% endif %}
         </aside>
 
         <main class="col-md-9 float-end">
             {% if not category and not q %}
             <section class="mb-5">
-                <h4 class="mb-3">인기 레시피</h4>
+                <h4 class="mb-3">인기 글</h4>
                 <div class="row g-4">
                     {% for post in popular_posts|slice:":3" %}
                     <article class="col-md-4">
@@ -58,10 +92,24 @@
 
             <section>
                 <header class="d-flex justify-content-between align-items-center mb-4">
-                    <h4>{% if category %}{{ category.name }}{% else %}최신 레시피{% endif %}</h4>
+                    <h4>
+                        {% if category %}
+                            {{ category.name }}
+                        {% elif q %}
+                            검색 결과 ({{ posts.count }}개)
+                        {% else %}
+                            최신 글
+                        {% endif %}
+                    </h4>
                     <select class="form-select w-auto" onchange="location = this.value;">
-                        <option value="?sort=latest" {% if sort == 'latest' %}selected{% endif %}>최신순</option>
-                        <option value="?sort=popular" {% if sort == 'popular' %}selected{% endif %}>인기순</option>
+                        <option value="?sort=latest{% if category %}&category={{ category.slug }}{% endif %}{% if q %}&q={{ q }}{% endif %}" 
+                                {% if sort == 'latest' %}selected{% endif %}>
+                            최신순
+                        </option>
+                        <option value="?sort=popular{% if category %}&category={{ category.slug }}{% endif %}{% if q %}&q={{ q }}{% endif %}" 
+                                {% if sort == 'popular' %}selected{% endif %}>
+                            인기순
+                        </option>
                     </select>
                 </header>
 
@@ -73,7 +121,8 @@
                                 <span class="badge bg-primary">{{ post.category.name }}</span>
                                 <time class="text-muted small float-end">{{ post.created_at|date:"Y.m.d" }}</time>
                                 <h5 class="mt-2 text-dark">{{ post.title }}</h5>
-                                <p class="text-muted">{{ post.content|truncatechars:100 }}</p>
+                                <p class="text-muted">{{ post.content|striptags|truncatechars:100 }}</p>
+                
                                 <div class="d-flex justify-content-between align-items-center mt-3">
                                     <span class="text-muted small">{{ post.author.username }}</span>
                                     <span class="text-muted small">조회 {{ post.view_count }} · 좋아요 {{ post.likes.count }}</span>
@@ -82,11 +131,55 @@
                         </a>
                     </article>
                     {% empty %}
-                    <p class="text-center text-muted py-5">등록된 게시글이 없습니다.</p>
+                    <p class="text-center text-muted py-5">
+                        {% if q %}
+                            검색 결과가 없습니다.
+                        {% else %}
+                            등록된 게시글이 없습니다.
+                        {% endif %}
+                    </p>
                     {% endfor %}
                 </div>
 
-                <!-- 기존 페이지네이션 코드 유지 -->
+                <!-- 페이지네이션 추가 -->
+                {% if is_paginated %}
+                <nav aria-label="페이지 네비게이션" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" 
+                                   href="?page={{ page_obj.previous_page_number }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}">
+                                    이전
+                                </a>
+                            </li>
+                        {% endif %}
+
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                            {% else %}
+                                <li class="page-item">
+                                    <a class="page-link" 
+                                       href="?page={{ num }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}">
+                                        {{ num }}
+                                    </a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" 
+                                   href="?page={{ page_obj.next_page_number }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}">
+                                    다음
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
             </section>
         </main>
     </div>
