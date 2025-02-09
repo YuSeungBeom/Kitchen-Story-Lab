@@ -1,3 +1,4 @@
+from django.shortcuts import get_object_or_404
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model
@@ -189,27 +190,28 @@ class PostDetailView(generic.DetailView):
 
     def get_object(self):
         obj = super().get_object()
-        obj.view_count += 1
-        obj.save()
+        if self.request.user.is_authenticated and self.request.user != obj.author:
+            obj.view_count += 1
+            obj.save()
         return obj
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
-        User = get_user_model()
+        # 현재 로그인한 사용자 확인
         if self.request.user.is_authenticated:
-            try:
-                user = User.objects.get(username=self.request.user.username)
-                context['is_liked'] = PostLike.objects.filter(
-                    post=self.object, 
-                    user=user
-                ).exists()
-            except User.DoesNotExist:
-                context['is_liked'] = False
+            context['is_liked'] = PostLike.objects.filter(
+                post=self.object,
+                user_id=self.request.user.id
+            ).exists()
         else:
             context['is_liked'] = False
 
-        # Retrieve previous and next posts within published status
+        # 댓글 폼과 댓글 목록 추가
+        context['comment_form'] = CommentForm()
+        context['comments'] = self.object.comments.all().order_by('-created_at')
+
+        # 이전글, 다음글 조회
         context['previous_post'] = Post.objects.filter(
             status='published', 
             created_at__lt=self.object.created_at
@@ -220,14 +222,20 @@ class PostDetailView(generic.DetailView):
             created_at__gt=self.object.created_at
         ).order_by('created_at').first()
 
-        # Fetch recipe details for the current post
+        # 레시피 정보 조회
         context['recipe_detail'] = Recipe.objects.filter(post=self.object).first()
         
-        # Find related posts in the same category
-        context['related_posts'] = Post.objects.filter(
-            status='published',
-            category=self.object.category
-        ).exclude(id=self.object.id).order_by('-created_at')[:3]
+        # 관련 게시물 조회
+        if self.object.category:
+            context['related_posts'] = Post.objects.filter(
+                status='published',
+                category=self.object.category
+            ).exclude(id=self.object.id).order_by('-created_at')[:3]
+        else:
+            context['related_posts'] = []
+
+        # 좋아요 수 추가
+        context['like_count'] = PostLike.objects.filter(post=self.object).count()
 
         return context
 
@@ -274,20 +282,24 @@ class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
 def toggle_like(request, post_pk):
     post = get_object_or_404(Post, pk=post_pk)
     
-    # 좋아요 존재 여부 확인
-    like, created = PostLike.objects.get_or_create(
-        post=post, 
-        user=request.user
-    )
-    
-    if not created:
-        # 이미 좋아요를 눌렀다면 취소
+    try:
+        # 좋아요가 이미 있는지 확인
+        like = PostLike.objects.get(post=post, user=request.user)
+        # 있으면 삭제
         like.delete()
         is_liked = False
-    else:
+    except PostLike.DoesNotExist:
+        # 없으면 생성
+        PostLike.objects.create(
+            post=post,
+            user=request.user
+        )
         is_liked = True
+    
+    # 좋아요 수 계산
+    like_count = PostLike.objects.filter(post=post).count()
     
     return JsonResponse({
         'is_liked': is_liked,
-        'like_count': post.postlike_set.count()
-    })    
+        'like_count': like_count
+    })
