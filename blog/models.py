@@ -41,7 +41,6 @@ class Post(models.Model):
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True)
     category = models.ForeignKey('Category', on_delete=models.CASCADE, null=True, blank=True)
     
-    
     view_count = models.PositiveIntegerField(default=0)
     status = models.CharField(
         max_length=20,
@@ -92,7 +91,12 @@ class PostLike(models.Model):
 
     class Meta:
         db_table = 'post_likes'
-        unique_together = ['post', 'user']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['post', 'user'],
+                name='unique_post_like'
+            )
+        ]
 
 class Scrap(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
@@ -101,7 +105,12 @@ class Scrap(models.Model):
 
     class Meta:
         db_table = 'scraps'
-        unique_together = ['post', 'user']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['post', 'user'],
+                name='unique_post_scrap'
+            )
+        ]
 
 class Recipe(models.Model):
     post = models.OneToOneField(Post, on_delete=models.CASCADE)
