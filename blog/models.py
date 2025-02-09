@@ -85,8 +85,8 @@ class Comment(models.Model):
         return f'{self.author.username}의 댓글 - {self.content[:20]}'    
 
 class PostLike(models.Model):
-    post = models.ForeignKey('Post', on_delete=models.CASCADE)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='likes')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
