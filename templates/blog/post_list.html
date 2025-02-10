@@ -16,10 +16,10 @@
                            aria-label="Search" value="{{ q }}">
                     {% if categories %}
                     <select name="category" class="form-select" style="max-width: 120px;">
-                        <option value="">전체 카테고리</option>
+                        <option value="">전체 </option>
                         {% for category in categories %}
-                        <option value="{{ category.slug }}" 
-                                {% if request.GET.category == category.slug %}selected{% endif %}>
+                        <option value="{{ category.id }}" 
+                                {% if request.GET.category == category.id|stringformat:'s' %}selected{% endif %}>
                             {{ category.name }}
                         </option>
                         {% endfor %}
@@ -33,9 +33,25 @@
 
             <div class="d-flex align-items-center">
                 {% if user.is_authenticated %}
-                    <span class="me-3">{{ user.username }}님</span>
-                    <a href="{% url 'blog:post_write' %}" class="btn btn-primary btn-sm me-2">글쓰기</a>
-                    <a href="{% url 'accounts:logout' %}" class="btn btn-outline-secondary btn-sm">로그아웃</a>
+                <div class="me-3 text-muted">{{ user.nickname|default:user.username }}님, 반갑습니다</div>
+                    <div class="dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                            {% if user.profile_image %}
+                            <img src="{{ user.profile_image.url }}" class="rounded-circle" width="24" height="24"
+                                 alt="{{ user.username }}">
+                            {% else %}
+                            <i class="bi bi-person-circle"></i>
+                            {% endif %}
+                            {{ user.nickname|default:user.username }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{% url 'accounts:profile' %}">프로필</a></li>
+                            <li><a class="dropdown-item" href="{% url 'accounts:change_password' %}">비밀번호 변경</a></li>
+                            <li><a class="dropdown-item" href="{% url 'blog:post_write' %}">글쓰기</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="{% url 'accounts:logout' %}">로그아웃</a></li>
+                        </ul>
+                    </div>
                 {% else %}
                     <a href="{% url 'accounts:login' %}" class="btn btn-outline-primary btn-sm me-2">로그인</a>
                     <a href="{% url 'accounts:signup' %}" class="btn btn-primary btn-sm">회원가입</a>
@@ -45,8 +61,8 @@
     </nav>
 
     <header class="text-center py-5 mb-5 bg-white rounded-3 shadow-sm">
-        <h1 class="display-5 fw-bold text-primary">맛있는 이야기가 시작되는 곳</h1>
-        <p class="lead text-muted mb-4">나만의 특별한 레시피를 공유하고 발견해보세요</p>
+        <h1 class="display-5 fw-bold" style="color: #000000">맛있는 이야기가 시작되는 곳</h1>
+        <p class="lead md-4" style="color:#000000">나만의 특별한 레시피를 공유하고 발견해보세요</p>
         
         {% if user.is_authenticated %}
             <a href="{% url 'blog:post_write' %}" class="btn btn-primary btn-lg">레시피 작성하기</a>
@@ -57,12 +73,15 @@
 
     <div class="container">
         <aside class="col-md-3 float-start">
-            <!-- 기존 카테고리 네비게이션 코드 유지 -->
             {% if categories %}
-            <div class="list-group">
+            <div class="btn-group-vertical" style="width: 80%;">
+                <a href="{% url 'blog:post_list' %}" 
+                   class="btn {% if not request.GET.category %}btn-primary{% else %}btn-outline-primary{% endif %} mb-2">
+                    전체
+                </a>
                 {% for category in categories %}
-                <a href="{% url 'blog:post_list' %}?category={{ category.slug }}" 
-                   class="list-group-item list-group-item-action {% if category == selected_category %}active{% endif %}">
+                <a href="{% url 'blog:post_list' %}?category={{ category.id }}" 
+                   class="btn {% if request.GET.category == category.id|stringformat:'s' %}btn-primary{% else %}btn-outline-primary{% endif %} mb-2">
                     {{ category.name }}
                 </a>
                 {% endfor %}
@@ -72,6 +91,7 @@
 
         <main class="col-md-9 float-end">
             {% if not category and not q %}
+            <!-- 인기 글 섹션 -->
             <section class="mb-5">
                 <h4 class="mb-3">인기 글</h4>
                 <div class="row g-4">
@@ -79,9 +99,16 @@
                     <article class="col-md-4">
                         <a href="{% url 'blog:post_detail' post.pk %}" class="card h-100 text-decoration-none">
                             <div class="card-body">
-                                <span class="badge bg-primary">{{ post.category.name }}</span>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="badge bg-primary">{{ post.category.name }}</span>
+                                    <time class="text-muted small">{{ post.created_at|date:"Y.m.d" }}</time>
+                                </div>
                                 <h5 class="mt-2 text-dark">{{ post.title }}</h5>
-                                <p class="text-muted small">조회 {{ post.view_count }} · 좋아요 {{ post.likes.count }}</p>
+                                <p class="text-muted">{{ post.content|striptags|truncatechars:100 }}</p>
+                                <div class="d-flex justify-content-between align-items-center mt-3">
+                                    <span class="text-muted small">{{ post.author.username }}</span>
+                                    <span class="text-muted small">조회 {{ post.view_count }} · 좋아요 {{ post.likes.count }}</span>
+                                </div>
                             </div>
                         </a>
                     </article>
@@ -90,39 +117,36 @@
             </section>
             {% endif %}
 
-            <section>
-                <header class="d-flex justify-content-between align-items-center mb-4">
-                    <h4>
-                        {% if category %}
-                            {{ category.name }}
-                        {% elif q %}
-                            검색 결과 ({{ posts.count }}개)
-                        {% else %}
-                            최신 글
-                        {% endif %}
-                    </h4>
-                    <select class="form-select w-auto" onchange="location = this.value;">
-                        <option value="?sort=latest{% if category %}&category={{ category.slug }}{% endif %}{% if q %}&q={{ q }}{% endif %}" 
-                                {% if sort == 'latest' %}selected{% endif %}>
+            <!-- 최신 글 섹션 -->
+            <section class="mb-5">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="mb-0">최신 글</h4>
+                    <div class="btn-group">
+                        <a href="?{% if request.GET.category %}category={{ request.GET.category }}&{% endif %}{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}sort=latest" 
+                           class="btn btn-outline-primary btn-sm {% if request.GET.sort == 'latest' or not request.GET.sort %}active{% endif %}">
                             최신순
-                        </option>
-                        <option value="?sort=popular{% if category %}&category={{ category.slug }}{% endif %}{% if q %}&q={{ q }}{% endif %}" 
-                                {% if sort == 'popular' %}selected{% endif %}>
+                        </a>
+                        <a href="?{% if request.GET.category %}category={{ request.GET.category }}&{% endif %}{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}sort=popular" 
+                           class="btn btn-outline-primary btn-sm {% if request.GET.sort == 'popular' %}active{% endif %}">
                             인기순
-                        </option>
-                    </select>
-                </header>
+                        </a>
+                    </div>
+                </div>
 
                 <div class="row g-4">
                     {% for post in posts %}
                     <article class="col-md-6">
                         <a href="{% url 'blog:post_detail' post.pk %}" class="card h-100 text-decoration-none">
                             <div class="card-body">
-                                <span class="badge bg-primary">{{ post.category.name }}</span>
-                                <time class="text-muted small float-end">{{ post.created_at|date:"Y.m.d" }}</time>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="badge bg-primary">{{ post.category.name }}</span>
+                                    {% if post.status == 'draft' %}
+                                        <span class="badge bg-secondary">임시저장</span>
+                                    {% endif %}
+                                    <time class="text-muted small">{{ post.created_at|date:"Y.m.d" }}</time>
+                                </div>
                                 <h5 class="mt-2 text-dark">{{ post.title }}</h5>
                                 <p class="text-muted">{{ post.content|striptags|truncatechars:100 }}</p>
-                
                                 <div class="d-flex justify-content-between align-items-center mt-3">
                                     <span class="text-muted small">{{ post.author.username }}</span>
                                     <span class="text-muted small">조회 {{ post.view_count }} · 좋아요 {{ post.likes.count }}</span>
@@ -141,7 +165,7 @@
                     {% endfor %}
                 </div>
 
-                <!-- 페이지네이션 추가 -->
+                <!-- 페이지네이션 -->
                 {% if is_paginated %}
                 <nav aria-label="페이지 네비게이션" class="mt-4">
                     <ul class="pagination justify-content-center">
