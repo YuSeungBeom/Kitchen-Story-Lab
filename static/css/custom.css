@@ -1,30 +1,24 @@
 :root {
-    --primary-color: #0d6efd;  /* Bootstrap primary color로 변경 */
-    --secondary-color: #4ECDC4;
-    --text-color: #2C3E50;
-    --background-color: #F7F9FC;
+    --bs-primary: #0d6efd !important;  /* Bootstrap 기본 파란색으로 복원 */
+    --bs-primary-rgb: 13,110,253 !important;
 }
 
-/* 기존 스타일 유지하면서 Bootstrap 통합 */
-.btn-primary {
-    background-color: var(--primary-color);
-    border-color: var(--primary-color);
+.btn-primary,
+.btn.btn-primary,
+.bg-primary,
+.text-bg-primary,
+.border-primary {
+    background-color: #0d6efd !important;
+    border-color: #0d6efd !important;
+    color: white !important;
 }
 
-.navbar {
-    background-color: white !important;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+.btn-outline-primary {
+    color: #0d6efd !important;
+    border-color: #0d6efd !important;
 }
 
-/* 프로필 이미지 스타일 추가 */
-.profile-image {
-    width: 24px;
-    height: 24px;
-    object-fit: cover;
-}
-
-/* 알림 메시지 스타일 개선 */
-.alert {
-    border: none;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+.btn-outline-primary:hover {
+    background-color: #0d6efd !important;
+    color: white !important;
 }
