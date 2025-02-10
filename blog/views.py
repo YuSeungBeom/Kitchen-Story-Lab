@@ -1,17 +1,17 @@
-from django.shortcuts import get_object_or_404
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.db.models import F
 from django.http import JsonResponse
-from .models import PostLike
+from django.shortcuts import get_object_or_404
 from django.views import generic
 from django.views.decorators.http import require_POST
 from django.views.generic import TemplateView, CreateView
 from django.views.generic.edit import UpdateView, DeleteView
-from django.urls import reverse_lazy
 from django.db.models import Q, Count
-from .models import Post, Category, Recipe, Comment
+from django.urls import reverse_lazy
+from .models import Post, Category, Recipe, Comment, PostLike
 from .forms import PostForm, CommentForm
 
 class PostListView(generic.ListView):
@@ -21,12 +21,22 @@ class PostListView(generic.ListView):
     paginate_by = 8
 
     def get_queryset(self):
-        queryset = Post.objects.filter(status='published')
+        queryset = Post.objects.all()
+
+        if self.request.user.is_authenticated:
+            queryset = queryset.filter(
+                Q(status='published') |
+                Q(status='draft', author=self.request.user)
+            )
+        else:
+            queryset = queryset.filter(status='published')
+
         category_slug = self.request.GET.get('category')
         search_query = self.request.GET.get('q')
 
         if category_slug:
-            queryset = queryset.filter(category__slug=category_slug)
+            if category_slug != '전체':  # '전체'가 아닐 때만 필터링
+                queryset = queryset.filter(category__id=category_slug)
         if search_query:
             queryset = queryset.filter(
                 Q(title__icontains=search_query) | 
@@ -35,7 +45,9 @@ class PostListView(generic.ListView):
 
         sort = self.request.GET.get('sort', 'latest')
         if sort == 'popular':
-            queryset = queryset.order_by('-view_count', '-created_at')
+            queryset = queryset.annotate(
+                popularity_score=Count('likes') + F('view_count')
+            ).order_by('-popularity_score', '-created_at')
         else:
             queryset = queryset.order_by('-created_at')
 
@@ -45,21 +57,23 @@ class PostListView(generic.ListView):
         context = super().get_context_data(**kwargs)
         
         # 기본 컨텍스트 데이터
-        context['categories'] = Category.objects.all()
+        context['categories'] = Category.objects.all().order_by('order','name')
         context['sort'] = self.request.GET.get('sort', 'latest')
         context['category'] = None
         context['q'] = self.request.GET.get('q', '')
 
         # 카테고리 정보
         category_slug = self.request.GET.get('category')
-        if category_slug:
-            context['category'] = Category.objects.filter(slug=category_slug).first()
+        if category_slug and category_slug != '전체':
+            context['category'] = get_object_or_404(Category, id=category_slug)
 
         # 인기 게시물 (검색이나 카테고리 필터가 없을 때만)
         if not (category_slug or context['q']):
             context['popular_posts'] = Post.objects.filter(
                 status='published'
-            ).order_by('-view_count', '-created_at')[:3]
+            ).annotate(
+                popularity_score=Count('likes') + F('view_count')
+            ).order_by('-popularity_score')[:3]
 
         return context
 
@@ -84,6 +98,12 @@ class PostCreateView(LoginRequiredMixin, generic.CreateView):
     def form_valid(self, form):
         # User 모델 가져오기
         User = get_user_model()
+
+        action = self.request.POST.get('action')
+        if action == 'draft':
+            form.instance.status = 'draft'
+        else:
+            form.instance.status = 'published'
 
         # 현재 사용자를 직접 작성자로 설정
         form.instance.author = self.request.user
@@ -127,6 +147,13 @@ class PostUpdateView(LoginRequiredMixin, UserPassesTestMixin, generic.UpdateView
         return self.request.user == post.author
 
     def form_valid(self, form):
+        
+        action = self.request.POST.get('action')
+        if action == 'draft':
+            form.instance.status = 'draft'
+        else:
+            form.instance.status = 'published'
+
         response = super().form_valid(form)
         recipe, created = Recipe.objects.get_or_create(post=self.object)
         recipe.serving_size = form.cleaned_data.get('serving_size')
@@ -190,7 +217,11 @@ class PostDetailView(generic.DetailView):
 
     def get_object(self):
         obj = super().get_object()
-        if self.request.user.is_authenticated and self.request.user != obj.author:
+
+        if obj.status == 'draft' and obj.author != self.request.user:
+            raise PermissionDenied
+
+        if obj.status == 'published' and self.request.user.is_authenticated and self.request.user != obj.author:
             obj.view_count += 1
             obj.save()
         return obj
