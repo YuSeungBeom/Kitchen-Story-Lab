@@ -29,11 +29,10 @@ class PostForm(forms.ModelForm):
     class Meta:
         model = Post
         fields = ['title', 'content', 'category', 'serving_size', 
-                 'cooking_time', 'difficulty', 'status']  # status를 마지막으로 이동
+                 'cooking_time', 'difficulty']  # status 필드 제거
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control'}),
             'category': forms.Select(attrs={'class': 'form-select'}),
-            'status': forms.Select(attrs={'class': 'form-select'}),
         }
 
     def __init__(self, *args, **kwargs):
