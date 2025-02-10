@@ -1,63 +1,59 @@
-from django.shortcuts import render, redirect
-from django.contrib.auth import login, logout, authenticate, update_session_auth_hash
-from django.contrib.auth.decorators import login_required
+from django.views.generic import CreateView, FormView, UpdateView, TemplateView
+from django.contrib.auth import logout
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.views import LoginView, LogoutView, PasswordChangeView
 from django.contrib.auth.forms import PasswordChangeForm
+from django.shortcuts import redirect
+from django.urls import reverse_lazy
 from django.contrib import messages
 from .forms import CustomUserCreationForm, CustomUserChangeForm
 
-def signup(request):
-    if request.method == 'POST':
-        form = CustomUserCreationForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            login(request, user)
-            messages.success(request, '회원가입이 완료되었습니다.')
-            return redirect('blog:post_list')  
-    else:
-        form = CustomUserCreationForm()
-    return render(request, 'accounts/signup.html', {'form': form})
+class SignUpView(CreateView):
+    template_name = 'accounts/signup.html'
+    form_class = CustomUserCreationForm
+    success_url = reverse_lazy('blog:post_list')
 
-def user_login(request):
-    if request.method == 'POST':
-        username = request.POST['username']
-        password = request.POST['password']
-        user = authenticate(request, username=username, password=password)
-        if user is not None:
-            login(request, user)
-            messages.success(request, '로그인되었습니다.')
-            return redirect('blog:post_list')  
-        else:
-            messages.error(request, '아이디 또는 비밀번호가 올바르지 않습니다.')
-    return render(request, 'accounts/login.html')
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        user = form.save()
+        self.request.user = user
+        messages.success(self.request, '회원가입이 완료되었습니다.')
+        return response
 
-@login_required
-def user_logout(request):
-    logout(request)
-    messages.success(request, '로그아웃되었습니다.')
-    return redirect('blog:post_list')  
+class UserLoginView(LoginView):
+    template_name = 'accounts/login.html'
+    
+    def get_success_url(self):
+        messages.success(self.request, '로그인되었습니다.')
+        return reverse_lazy('blog:post_list')
 
-@login_required
-def profile(request):
-    if request.method == 'POST':
-        form = CustomUserChangeForm(request.POST, request.FILES, instance=request.user)
-        if form.is_valid():
-            form.save()
-            messages.success(request, '프로필이 업데이트되었습니다.')
-            return redirect('accounts:profile')
-    else:
-        form = CustomUserChangeForm(instance=request.user)
-    return render(request, 'accounts/profile.html', {'form': form})
+class UserLogoutView(LogoutView):
+    next_page = reverse_lazy('blog:post_list')
 
-@login_required
-def change_password(request):
-    if request.method == 'POST':
-        form = PasswordChangeForm(request.user, request.POST)
-        if form.is_valid():
-            user = form.save()
-            update_session_auth_hash(request, user)
-            messages.success(request, '비밀번호가 변경되었습니다.')
-            return redirect('accounts:profile')
-    else:
-        form = PasswordChangeForm(request.user)
-    return render(request, 'accounts/password_change.html', {'form': form})
+    def dispatch(self, request, *args, **kwargs):
+        logout(request)
+        messages.success(request, '로그아웃되었습니다.')
+        return redirect('blog:post_list')
 
+class ProfileView(LoginRequiredMixin, UpdateView):
+    template_name = 'accounts/profile.html'
+    form_class = CustomUserChangeForm
+    success_url = reverse_lazy('accounts:profile')
+
+    def get_object(self):
+        return self.request.user
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, '프로필이 업데이트되었습니다.')
+        return response
+
+class PasswordChangeView(LoginRequiredMixin, PasswordChangeView):
+    template_name = 'accounts/password_change.html'
+    form_class = PasswordChangeForm
+    success_url = reverse_lazy('accounts:profile')
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, '비밀번호가 변경되었습니다.')
+        return response
