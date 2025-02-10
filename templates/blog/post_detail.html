@@ -7,7 +7,174 @@
 <article class="container">
     <section class="row">
         <div class="col-lg-8">
-            <!-- 상단 네비게이션 버튼 추가 -->
+            <!-- 타이머 섹션 -->
+<div class="timer-container bg-light p-3 rounded mb-3" style="display: none;">
+    <div class="input-group">
+        {% if recipe_detail.cooking_time %}
+        <input type="number" id="CookingTimeInput" class="form-control" 
+               placeholder="Cooking Time (min)" min="1" max="120" 
+               value="{{ recipe_detail.cooking_time }}">
+        {% else %}
+        <input type="number" id="CookingTimeInput" class="form-control" 
+               placeholder="Cooking Time (min)" min="1" max="120">
+        {% endif %}
+        <button id="startTimer" class="btn btn-primary">Start</button>
+        <span id="timerDisplay" class="form-control text-center"></span>
+        <button id="pauseResumeTimer" class="btn btn-secondary" disabled>Pause</button>
+        <button id="resetTimer" class="btn btn-danger" disabled>Reset</button>
+    </div>
+</div>
+
+<!-- 스크립트 -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 타이머 관련 코드
+        const timerContainer = document.querySelector('.timer-container');
+        const CookingTimeInput = document.getElementById('CookingTimeInput');
+        const startTimerBtn = document.getElementById('startTimer');
+        const timerDisplay = document.getElementById('timerDisplay');
+        const pauseResumeBtn = document.getElementById('pauseResumeTimer');
+        const resetBtn = document.getElementById('resetTimer');
+
+        // 알림음 생성
+        const alarmSound = new Audio('/static/audio/alarm.mp3');
+
+        if (!timerContainer || !CookingTimeInput || !startTimerBtn || !timerDisplay || !pauseResumeBtn || !resetBtn) {
+            console.error('타이머 요소를 찾을 수 없습니다.');
+            return;
+        }
+
+        timerContainer.style.display = 'block';
+
+        let timeLeft = 0;
+        let timerInterval = null;
+        let isPaused = false;
+
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+        }
+
+        function playAlarm() {
+            alarmSound.currentTime = 0;
+            alarmSound.play().catch(error => {
+                console.log('알림음 재생 실패:', error);
+            });
+        }
+
+        startTimerBtn.addEventListener('click', function() {
+            const minutes = parseInt(CookingTimeInput.value);
+            if (isNaN(minutes) || minutes < 1) {
+                alert('유효한 시간을 입력해주세요');
+                return;
+            }
+
+            if (timerInterval) {
+                clearInterval(timerInterval);
+            }
+
+            timeLeft = minutes * 60;
+            timerDisplay.textContent = formatTime(timeLeft);
+            timerDisplay.style.color = 'green';
+
+            startTimerBtn.disabled = true;
+            CookingTimeInput.disabled = true;
+            pauseResumeBtn.disabled = false;
+            resetBtn.disabled = false;
+            pauseResumeBtn.textContent = 'Pause';
+            isPaused = false;
+
+            timerInterval = setInterval(function() {
+                if (!isPaused) {
+                    if (timeLeft > 0) {
+                        timeLeft--;
+                        timerDisplay.textContent = formatTime(timeLeft);
+                        
+                        if (timeLeft <= 180) {
+                            timerDisplay.style.color = 'red';
+                        } else if (timeLeft <= 600) {
+                            timerDisplay.style.color = 'orange';
+                        }
+                    } else {
+                        clearInterval(timerInterval);
+                        playAlarm();  // 알림음 재생
+                        alert('조리 시간이 종료되었습니다!');
+                        
+                        startTimerBtn.disabled = false;
+                        CookingTimeInput.disabled = false;
+                        pauseResumeBtn.disabled = true;
+                        resetBtn.disabled = true;
+                    }
+                }
+            }, 1000);
+        });
+
+        pauseResumeBtn.addEventListener('click', function() {
+            isPaused = !isPaused;
+            this.textContent = isPaused ? 'Resume' : 'Pause';
+        });
+
+        resetBtn.addEventListener('click', function() {
+            clearInterval(timerInterval);
+            
+            startTimerBtn.disabled = false;
+            CookingTimeInput.disabled = false;
+            pauseResumeBtn.disabled = true;
+            resetBtn.disabled = true;
+            
+            timerDisplay.textContent = '';
+            timerDisplay.style.color = 'green';
+            // 기존의 cooking_time 값으로 복원
+            {% if recipe_detail.cooking_time %}
+            CookingTimeInput.value = '{{ recipe_detail.cooking_time }}';
+            {% else %}
+            CookingTimeInput.value = '';
+            {% endif %}
+        });
+
+        // 좋아요 버튼 관련 코드
+        const likeButton = document.getElementById('likeButton');
+        
+        if (likeButton) {
+            likeButton.addEventListener('click', function() {
+                {% if user.is_authenticated %}
+                    const postId = this.dataset.postId;
+                    
+                    fetch(`/post/${postId}/like/`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                        },
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        // 좋아요 수 업데이트
+                        this.querySelector('.like-count').textContent = data.like_count;
+                        
+                        // 버튼 스타일 토글
+                        if (data.is_liked) {
+                            this.classList.remove('btn-outline-danger');
+                            this.classList.add('btn-danger');
+                            this.querySelector('.bi').classList.remove('bi-heart');
+                            this.querySelector('.bi').classList.add('bi-heart-fill');
+                        } else {
+                            this.classList.remove('btn-danger');
+                            this.classList.add('btn-outline-danger');
+                            this.querySelector('.bi').classList.remove('bi-heart-fill');
+                            this.querySelector('.bi').classList.add('bi-heart');
+                        }
+                    })
+                    .catch(error => console.error('Error:', error));
+                {% else %}
+                    window.location.href = "{% url 'accounts:login' %}";
+                {% endif %}
+            });
+        }
+    });
+</script>
+
+            <!-- 상단 네비게이션 버튼 -->
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <a href="{% url 'blog:post_list' %}" class="btn btn-outline-secondary">
                     <i class="bi bi-list me-1"></i>목록으로
@@ -47,7 +214,7 @@
                         {{ post.content|safe }}
                     </section>
                     
-                    <!-- 레시피 정보 섹션 추가 -->
+                    <!-- 레시피 정보 섹션 -->
                     {% if recipe_detail %}
                     <section class="card shadow-sm mb-4">
                         <div class="card-header bg-light">
@@ -85,7 +252,7 @@
                     </section>
                     {% endif %}
 
-                    <!-- footer 부분 수정 -->
+                    <!-- footer 부분 -->
                     <footer class="d-flex justify-content-between align-items-center border-top pt-3">
                         <div>
                             <button class="btn {% if is_liked %}btn-danger{% else %}btn-outline-danger{% endif %} like-button" 
@@ -123,44 +290,44 @@
             </div>
 
             <!-- 댓글 섹션 -->
-<section class="mt-5">
-    <h5 class="mb-4">댓글 {{ post.comments.count }}개</h5>
-    
-    {% if user.is_authenticated %}
-    <form method="post" action="{% url 'blog:comment_create' post.pk %}">
-        {% csrf_token %}
-        <div class="form-group">
-            {{ comment_form.content }}
-            <small class="text-muted">최대 500자까지 입력 가능합니다.</small>
-        </div>
-        <button type="submit" class="btn btn-primary mt-2">댓글 작성</button>
-    </form>
-    {% else %}
-    <p>댓글을 작성하려면 <a href="{% url 'accounts:login' %}">로그인</a>해주세요.</p>
-    {% endif %}
-    
-    <!-- 댓글 목록 -->
-    <div class="comments mt-4">
-        {% for comment in post.comments.all %}
-        <div class="comment mb-3 border-bottom pb-2">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <strong>{{ comment.author.username }}</strong>
-                <small class="text-muted">{{ comment.created_at|date:"Y.m.d H:i" }}</small>
-            </div>
-            <p>{{ comment.content }}</p>
-            
-            {% if user == comment.author %}
-            <div class="comment-actions">
-                <a href="{% url 'blog:comment_update' comment.pk %}" class="btn btn-sm btn-outline-primary">수정</a>
-                <a href="{% url 'blog:comment_delete' comment.pk %}" class="btn btn-sm btn-outline-danger">삭제</a>
-            </div>
-            {% endif %}
-        </div>
-        {% empty %}
-        <p class="text-muted">아직 댓글이 없습니다.</p>
-        {% endfor %}
-    </div>
-</section>
+            <section class="mt-5">
+                <h5 class="mb-4">댓글 {{ post.comments.count }}개</h5>
+                
+                {% if user.is_authenticated %}
+                <form method="post" action="{% url 'blog:comment_create' post.pk %}">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        {{ comment_form.content }}
+                        <small class="text-muted">최대 500자까지 입력 가능합니다.</small>
+                    </div>
+                    <button type="submit" class="btn btn-primary mt-2">댓글 작성</button>
+                </form>
+                {% else %}
+                <p>댓글을 작성하려면 <a href="{% url 'accounts:login' %}">로그인</a>해주세요.</p>
+                {% endif %}
+                
+                <!-- 댓글 목록 -->
+                <div class="comments mt-4">
+                    {% for comment in post.comments.all %}
+                    <div class="comment mb-3 border-bottom pb-2">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <strong>{{ comment.author.username }}</strong>
+                            <small class="text-muted">{{ comment.created_at|date:"Y.m.d H:i" }}</small>
+                        </div>
+                        <p>{{ comment.content }}</p>
+                        
+                        {% if user == comment.author %}
+                        <div class="comment-actions">
+                            <a href="{% url 'blog:comment_update' comment.pk %}" class="btn btn-sm btn-outline-primary">수정</a>
+                            <a href="{% url 'blog:comment_delete' comment.pk %}" class="btn btn-sm btn-outline-danger">삭제</a>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% empty %}
+                    <p class="text-muted">아직 댓글이 없습니다.</p>
+                    {% endfor %}
+                </div>
+            </section>
         </div>
 
         <!-- 사이드바 -->
@@ -187,43 +354,153 @@
         </aside>
     </section>
 </article>
+
+<!-- 스크립트 -->
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const likeButton = document.getElementById('likeButton');
-        
-        likeButton.addEventListener('click', function() {
-            {% if user.is_authenticated %}
-                const postId = this.dataset.postId;
-                
-                fetch(`/post/${postId}/like/`, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-                    },
-                })
-                .then(response => response.json())
-                .then(data => {
-                    // 좋아요 수 업데이트
-                    this.querySelector('.like-count').textContent = data.like_count;
-                    
-                    // 버튼 스타일 토글
-                    if (data.is_liked) {
-                        this.classList.remove('btn-outline-danger');
-                        this.classList.add('btn-danger');
-                        this.querySelector('.bi').classList.remove('bi-heart');
-                        this.querySelector('.bi').classList.add('bi-heart-fill');
+        // 타이머 관련 코드
+        const timerContainer = document.querySelector('.timer-container');
+        const CookingTimeInput = document.getElementById('CookingTimeInput');
+        const startTimerBtn = document.getElementById('startTimer');
+        const timerDisplay = document.getElementById('timerDisplay');
+        const pauseResumeBtn = document.getElementById('pauseResumeTimer');
+        const resetBtn = document.getElementById('resetTimer');
+
+        // 알림음 생성
+        const alarmSound = new Audio('/static/audio/alarm.mp3');
+
+        if (!timerContainer || !CookingTimeInput || !startTimerBtn || !timerDisplay || !pauseResumeBtn || !resetBtn) {
+            console.error('타이머 요소를 찾을 수 없습니다.');
+            return;
+        }
+
+        timerContainer.style.display = 'block';
+
+        let timeLeft = 0;
+        let timerInterval = null;
+        let isPaused = false;
+
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+        }
+
+        function playAlarm() {
+            alarmSound.currentTime = 0;
+            alarmSound.play().catch(error => {
+                console.log('알림음 재생 실패:', error);
+            });
+        }
+
+        startTimerBtn.addEventListener('click', function() {
+            const minutes = parseInt(CookingTimeInput.value);
+            if (isNaN(minutes) || minutes < 1) {
+                alert('유효한 시간을 입력해주세요');
+                return;
+            }
+
+            if (timerInterval) {
+                clearInterval(timerInterval);
+            }
+
+            timeLeft = minutes * 60;
+            timerDisplay.textContent = formatTime(timeLeft);
+            timerDisplay.style.color = 'green';
+
+            startTimerBtn.disabled = true;
+            CookingTimeInput.disabled = true;
+            pauseResumeBtn.disabled = false;
+            resetBtn.disabled = false;
+            pauseResumeBtn.textContent = 'Pause';
+            isPaused = false;
+
+            timerInterval = setInterval(function() {
+                if (!isPaused) {
+                    if (timeLeft > 0) {
+                        timeLeft--;
+                        timerDisplay.textContent = formatTime(timeLeft);
+                        
+                        if (timeLeft <= 180) {
+                            timerDisplay.style.color = 'red';
+                        } else if (timeLeft <= 600) {
+                            timerDisplay.style.color = 'orange';
+                        }
                     } else {
-                        this.classList.remove('btn-danger');
-                        this.classList.add('btn-outline-danger');
-                        this.querySelector('.bi').classList.remove('bi-heart-fill');
-                        this.querySelector('.bi').classList.add('bi-heart');
+                        clearInterval(timerInterval);
+                        playAlarm();  // 알림음 재생
+                        alert('조리 시간이 종료되었습니다!');
+                        
+                        startTimerBtn.disabled = false;
+                        CookingTimeInput.disabled = false;
+                        pauseResumeBtn.disabled = true;
+                        resetBtn.disabled = true;
                     }
-                })
-                .catch(error => console.error('Error:', error));
+                }
+            }, 1000);
+        });
+
+        pauseResumeBtn.addEventListener('click', function() {
+            isPaused = !isPaused;
+            this.textContent = isPaused ? 'Resume' : 'Pause';
+        });
+
+        resetBtn.addEventListener('click', function() {
+            clearInterval(timerInterval);
+            
+            startTimerBtn.disabled = false;
+            CookingTimeInput.disabled = false;
+            pauseResumeBtn.disabled = true;
+            resetBtn.disabled = true;
+            
+            timerDisplay.textContent = '';
+            timerDisplay.style.color = 'green';
+            // 기존의 cooking_time 값으로 복원
+            {% if recipe_detail.cooking_time %}
+            CookingTimeInput.value = '{{ recipe_detail.cooking_time }}';
             {% else %}
-                window.location.href = "{% url 'accounts:login' %}";
+            CookingTimeInput.value = '';
             {% endif %}
         });
+
+        // 좋아요 버튼 관련 코드
+        const likeButton = document.getElementById('likeButton');
+        
+        if (likeButton) {
+            likeButton.addEventListener('click', function() {
+                {% if user.is_authenticated %}
+                    const postId = this.dataset.postId;
+                    
+                    fetch(`/post/${postId}/like/`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                        },
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        // 좋아요 수 업데이트
+                        this.querySelector('.like-count').textContent = data.like_count;
+                        
+                        // 버튼 스타일 토글
+                        if (data.is_liked) {
+                            this.classList.remove('btn-outline-danger');
+                            this.classList.add('btn-danger');
+                            this.querySelector('.bi').classList.remove('bi-heart');
+                            this.querySelector('.bi').classList.add('bi-heart-fill');
+                        } else {
+                            this.classList.remove('btn-danger');
+                            this.classList.add('btn-outline-danger');
+                            this.querySelector('.bi').classList.remove('bi-heart-fill');
+                            this.querySelector('.bi').classList.add('bi-heart');
+                        }
+                    })
+                    .catch(error => console.error('Error:', error));
+                {% else %}
+                    window.location.href = "{% url 'accounts:login' %}";
+                {% endif %}
+            });
+        }
     });
-    </script>
+</script>
 {% endblock %}
