@@ -1,5 +1,4 @@
 from pathlib import Path
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -136,38 +135,25 @@ TINYMCE_COMPRESSOR = False
 
 TINYMCE_DEFAULT_CONFIG = {
     'api_key': 'pypz0os5nocw3u5memwasz6cq8su53ar4dv5ksp9wep1hh80',
-    'cleanup_on_startup': True,
-    'custom_undo_redo_levels': 20,
-    'selector': 'textarea',
     'theme': 'silver',
     'plugins': '''
         advlist autolink lists link image charmap preview anchor
         searchreplace visualblocks code fullscreen
-        insertdatetime media table paste code help wordcount
+        insertdatetime media table paste code help wordcount emoticons 
+        codesample directionality
     ''',
     'toolbar': '''
-        undo redo | formatselect | bold italic backcolor | 
+        undo redo | 
+        fontselect formatselect fontsizeselect | 
+        bold italic underline strikethrough | 
+        forecolor backcolor | 
         alignleft aligncenter alignright alignjustify | 
-        bullist numlist outdent indent | removeformat | 
-        image media link | help
+        bullist numlist outdent indent | 
+        link image media emoticons codesample | 
+        removeformat | fullscreen preview | 
+        help
     ''',
-    'menubar': 'file edit view insert format tools table help',
+    'menubar': True,
     'content_style': 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 16px; }',
-    'browser_spellcheck': True,
-    'contextmenu': 'link image',
-    'removed_menuitems': 'newdocument',
-    'paste_data_images': True,
-    'image_advtab': True,
-    'relative_urls': False,  # false -> False로 수정
-    'remove_script_host': False,  # false -> False로 수정
-    'referrer_policy': 'origin',
-    'protect': [
-        r'<!--[\s\S]*?-->',  # 이스케이프 시퀀스 수정
-        r'<!\[CDATA\[[\s\S]*?\]\]>',  # 이스케이프 시퀀스 수정
-        r'<script[\s\S]*?>'  # 이스케이프 시퀀스 수정
-    ],
-    'verify_html': True,
-    'document_base_url': "{{ request.scheme }}://{{ request.get_host }}/",
-    'allow_script_urls': True,
-    'convert_urls': False  # false -> False로 수정
+    'height': 500,
 }
