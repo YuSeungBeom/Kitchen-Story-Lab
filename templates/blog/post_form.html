@@ -75,30 +75,26 @@
         selector: '#id_content',
         height: 500,
         plugins: [
-            'advlist autolink lists link image charmap preview anchor',
-            'searchreplace visualblocks code fullscreen',
-            'insertdatetime media table paste code help wordcount'
+        'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview', 'anchor',
+        'searchreplace', 'visualblocks', 'code', 'fullscreen',
+        'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount', 'emoticons',
+        'codesample', 'directionality','imagetools',''
         ],
-        toolbar: 'undo redo | formatselect | ' +
-                'bold italic backcolor | alignleft aligncenter ' +
-                'alignright alignjustify | bullist numlist outdent indent | ' +
-                'removeformat | image media link | help',
-        menubar: 'file edit view insert format tools table help',
-        content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 16px; }',
-        browser_spellcheck: true,
-        contextmenu: false,
-        paste_data_images: true,
-        image_advtab: true,
-        automatic_uploads: true,
-        file_picker_types: 'image',
-        relative_urls: false,
-        remove_script_host: false,
-        convert_urls: true,
-        referrer_policy: 'origin'
-    });
-
-    // status 라디오 버튼과 제출 버튼 연동
-    document.querySelectorAll('[name="action"]').forEach(button => {
+        toolbar: 
+        'undo redo | ' +
+        'fontselect formatselect fontsizeselect | ' +
+        'bold italic underline strikethrough | ' +
+        'forecolor backcolor | ' +
+        'alignleft aligncenter alignright alignjustify | ' +
+        'bullist numlist outdent indent | ' +
+        'link image media emoticons codesample | ' +
+        'removeformat | fullscreen preview | ' +
+        'help',
+        menubar: true,
+        height: 500
+        
+        // status 라디오 버튼과 제출 버튼 연동
+        document.querySelectorAll('[name="action"]').forEach(button => {
         button.addEventListener('click', function() {
             const status = this.value;
             document.querySelector(`#status-${status}`).checked = true;
