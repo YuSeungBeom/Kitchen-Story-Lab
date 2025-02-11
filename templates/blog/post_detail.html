@@ -199,12 +199,12 @@
                             <div class="d-flex align-items-center">
                                 {% if post.author.profile_image %}
                                     <img src="{{ post.author.profile_image.url }}" 
-                                         class="rounded-circle me-2" width="32" height="32" alt="{{ post.author.username }}">
+                                         class="rounded-circle me-2" width="32" height="32" alt="{{ post.author.nickname|default:post.author.username }}">
                                 {% else %}
                                     <img src="{% static 'images/default-avatar.png' %}" 
-                                         class="rounded-circle me-2" width="32" height="32" alt="{{ post.author.username }}">
+                                         class="rounded-circle me-2" width="32" height="32" alt="{{ post.author.nickname|default:post.author.username }}">
                                 {% endif %}
-                                <span class="text-muted">{{ post.author.username }}</span>
+                                <span class="text-muted">{{ post.author.nickname|default:post.author.username }}</span>
                             </div>
                             <small class="text-muted">{{ post.created_at|date:"Y년 m월 d일" }}</small>
                         </div>
@@ -311,7 +311,16 @@
                     {% for comment in post.comments.all %}
                     <div class="comment mb-3 border-bottom pb-2">
                         <div class="d-flex justify-content-between align-items-center mb-2">
-                            <strong>{{ comment.author.username }}</strong>
+                            <div class="d-flex align-items-center">
+                                {% if comment.author.profile_image %}
+                                    <img src="{{ comment.author.profile_image.url }}" 
+                                         class="rounded-circle me-2" width="24" height="24" 
+                                         alt="{{ comment.author.nickname|default:comment.author.username }}">
+                                {% else %}
+                                    <i class="bi bi-person-circle me-2"></i>
+                                {% endif %}
+                            <strong>{{ comment.author.nickname|default:comment.author.username }}</strong>
+                            </div>
                             <small class="text-muted">{{ comment.created_at|date:"Y.m.d H:i" }}</small>
                         </div>
                         <p>{{ comment.content }}</p>
