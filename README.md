@@ -1,6 +1,6 @@
 # Kitchen_Story_Lab 
 
-<img src="logo.jpg" alt="logo" width="200px">
+<img src="static/images/logo.jpg" alt="logo" width="200px">
 
 ## Django로 만든 요리 팁&레시피 공유 블로그
 
@@ -215,41 +215,52 @@ python manage.py runserver
 * 최종 점검
 
 ## ERD
-![alt text](ERD.png)
+![ERD](/static/images/ERD.png)
 
 ## 구현(gif)
 #### 회원가입   
-![alt text](<회원가입 (2).gif>)
+![회원가입](/static/images/회원가입(2).gif)
+
 #### 로그인
-![alt text](로그인.gif)
+![로그인](/static/images/로그인.gif)
+
 #### 비밀번호 & 프로필 변경
-![alt text](비밀번호-변경_-프로필-변경.gif)
+![비밀번호 및 프로필 변경](/static/images/비밀번호-변경_-프로필-변경.gif)
+
 #### 로그아웃
-![alt text](로그아웃.gif)
+![로그아웃](/static/images/로그아웃.gif)
+
 #### 카테고리 선택
-![alt text](카테고리-별-항목.gif)
+![카테고리 선택](/static/images/카테고리-별-항목.gif)
+
 #### 검색기능
-![alt text](검색.gif)
+![검색기능](/static/images/검색.gif)
+
 #### 게시물 목록 정렬
-![alt text](글-목록-페이지_-정렬.gif)
+![게시물 목록 정렬](/static/images/글-목록-페이지_-정렬.gif)
+
 #### 글 생성 및 글 수정(임시저장 & 수정)
-![alt text](임시저장-및-수정.gif)
+![글 생성 및 수정](/static/images/임시저장-및-수정.gif)
 *(임시저장은 작성자만 볼 수 있음)
-![alt text](image.png)
+![임시저장 설명](/static/images/image.png)
 (+ 화면 우측의 관련레시피는 같은 카테고리의 글)
+
 #### 글 삭제
-![alt text](<글 삭제.gif>)
+![글 삭제](/static/images/글삭제.gif)
+
 #### 댓글 CRUD
-![alt text](<댓글 CRUD.gif>)
-#### 레시피 정보 & 타이머 
-![alt text](<레시피-정보-표시_-타이머 (1).gif>)
+![댓글 기능](/static/images/댓글CRUD.gif)
+
+#### 레시피 정보 & 타이머
+![레시피 정보와 타이머](Kitchen-Story-Lab\static\images\레시피-정보-표시_-타이머(1).gif)
+
 #### 좋아요 기능
-![alt text](좋아요-증가.gif)
+![좋아요 기능](/static/images/좋아요-증가.gif)
 
 #### ( 글, 목록, 댓글에 이름대신 닉네임이 뜨도록 수정(갱신 안됨))
-![alt text](image-1.png)
-![alt text](image-3.png)
-![alt text](image-2.png)
+![화면 캡처 1](/static/images/image-1.png)
+![화면 캡처 2](/static/images/image-3.png)
+![화면 캡처 3](/static/images/image-2.png)
 
 
 ## 💥 어려웠던 점&문제 해결 내용(추가예정)
