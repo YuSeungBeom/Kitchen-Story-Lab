@@ -252,7 +252,7 @@ python manage.py runserver
 ![댓글 기능](/static/images/댓글CRUD.gif)
 
 #### 레시피 정보 & 타이머
-![레시피 정보와 타이머](Kitchen-Story-Lab\static\images\레시피-정보-표시_-타이머(1).gif)
+![레시피 정보와 타이머](Kitchen-Story-Lab\static\images\레시피-정보-표시-타이머(1).gif)
 
 #### 좋아요 기능
 ![좋아요 기능](/static/images/좋아요-증가.gif)
